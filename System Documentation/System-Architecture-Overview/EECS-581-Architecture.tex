@@ -1,0 +1,166 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{EECS 581 — Project 1: Minesweeper \\ System Documentation}
+\author{Team 26}
+\date{September 19, 2025}
+
+\begin{document}
+\maketitle
+
+\section*{Synopsis}
+\text{}{This project implements classic Minesweeper in Python with Pygame on a fixed 10x10 grid with a user selected 10 to 20 mines, using a minimal yet modular architecture of four components: Input Handler (captures and validates user actions), Game Logic (safe first click, uncover and flag rules, zero cell flood fill, win or loss detection), Board Manager (owns the grid, places unique mines, computes neighbor counts, tracks cell states), and User Interface (renders board, counters, and status). Data flows from user actions to the Input Handler, then to Game Logic which queries and updates the Board Manager, after which the UI renders the updated state. Each cell records mine presence, covered or uncovered state, flagged state, and adjacent mine count, while a central game state tracks total mines, flags remaining, covered safe cells, and overall status. The lifecycle proceeds from START to PLAYING, then to WIN or LOSS, with reset returning the game to START. This separation of concerns keeps our codebase small and enables future extensions by further teams, such as difficulty presets or alternate front-end designs.}
+
+\section{System Architecture Overview}
+\subsection{Purpose}
+\text{}{The purpose of this architecture is to keep Minesweeper small, testable, and easy to extend by cleanly separating the game module (state and rules) from the frontend (rendering and input). This separation enforces a simple, one-way flow of data—user input to input handling to game logic and board state, then to the user interface—so correctness of rules such as safe first click, flag validation, breadth-first reveal of zero cells, and win or loss detection can be verified independently of rendering. Our design uses explicit states (Start, Playing, Win, Loss) and a minimal set of data structures (Cell, Grid, GameState) to make the code understandable and maintainable. Overall, the goal is clarity for our reviewers and maintainers, reliable gameplay under stress, and a smooth handoff for the next part of our project. Figure 1 shows the methodical connections between our components, and will help to showcase how we accomplish our purpose.}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1.0\linewidth]{full-path-diagram.png}
+\caption{Full component interaction pathways}
+\label{fig:full-path-diagram}
+\end{figure}
+\subsection{Components}
+\text{}{This system architecture pertains to four main components and their interactions:}
+\begin{itemize}
+  \item \textbf{User Interface (UI):} \text{}{Renders the grid, remaining mines/flags, and overall status based on the current game state. Reflects updates from the game and exposes only the controls appropriate to the active state.}
+  
+  \item \textbf{Input Handler:} \text{}{Captures mouse position, clicks, and keyboard input, classifying them into high-level actions (uncover, toggle flag, reset, set mine count). Gating is state-aware: board actions are permitted only during \textit{PLAYING}, while mine count entry is limited to \textit{START}; invalid actions are ignored before reaching the game.}
+  
+  \item \textbf{Game Logic:} \text{}{Implements the state machine (\textit{START} $\rightarrow$ \textit{PLAYING} $\rightarrow$ \textit{END::WIN/LOSS} $\rightarrow$ \textit{START}) and enforces rules. Ensures first click safety, places unique mines, computes neighbor counts, performs BFS flood-reveal for zero cells, updates counters, validates flags, and detects win/loss.}
+  
+  \item \textbf{Board Manager:} \text{}{Owns the 10x10 grid and per-cell data (is\_mine, covered, flagged, neighbor\_count). Provides helpers for neighbor enumeration, unique mine placement, board reset, and a simple query/update API for logic and rendering.}
+\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\linewidth]{component-diagram.png}
+\caption{Component Interaction Diagram}
+\label{fig:component-diagram}
+\end{figure}
+
+\subsection{Data Flow}
+\begin{itemize}
+  \item \textbf{User Action} $\rightarrow$ Mouse/keyboard input is captured by the frontend; inputs allowed depend on the current state (\texttt{START}, \texttt{PLAYING}, \texttt{END::WIN/LOSS}).
+  \item \textbf{Input Handler} $\rightarrow$ Normalizes and validates events (e.g., uncover, toggle flag, reset, set mine count); invalid or state-blocked actions are ignored; valid actions are emitted as commands.
+  \item \textbf{Game Logic} $\leftrightarrow$ Applies rules to the current state: first-click safety, unique mine placement, neighbor counts, BFS zero-cell reveal, flag validation, counters, and win/loss detection. Our mine placement uses RNG (random number generation).
+  \item \textbf{Board Manager} $\leftrightarrow$ Executes queries/updates from Game Logic: sets/unsets \texttt{is\_mine}, (re)computes \texttt{mine\_count}, flips \texttt{covered}/\texttt{flagged}, and returns a snapshot of \texttt{Grid}/\texttt{Cell}/\texttt{GameState} to our user.
+  \item \textbf{UI Update} $\rightarrow$ The frontend reads the latest snapshot and re-renders the board and indicators (remaining mines/flags, status), enabling only the controls appropriate to the active state; the loop then awaits the next user action. This process is (simply) visualized in Figure \ref{fig:ui-diagram}.
+\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\linewidth]{game-flow-diagram.png}
+\caption{Game Flow Diagram}
+\label{fig:game-flow}
+\end{figure}
+
+\subsection{Key Data Structures}
+\begin{itemize}
+  \item \textbf{Cell:} Holds per-tile state: \texttt{is\_mine}, \texttt{covered}, \texttt{flagged}, and \texttt{neighbor\_count} (0–8). Game Logic flips these fields on uncover/flag actions and maintains the invariant that a cell cannot be both flagged and uncovered.
+  
+  \item \textbf{Grid:} A fixed 10x10 array of \textbf{Cell} that provides neighbor enumeration (8 directions), unique mine placement on the first click, neighbor count computation, and full reset for a new game. It also maps user coordinates to indices for consistent input handling. There is room for change here during Project 2.
+  
+\item \textbf{GameState:} Tracks global \texttt{status} (\texttt{START}, \texttt{PLAYING}, \texttt{END::WIN}, \texttt{END::LOSS}), \texttt{total\_mines} (total mines), \texttt{flags\_remaining} (current count), and \texttt{covered\_safe\_cells} (safe cells still covered), with potential for optional flags or mine seeding upon development during Project 2. As the state is updated, the board should reflect the updates.
+
+\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\linewidth]{structures-diagram.png}
+\caption{Data structures tabular representation}
+\label{fig:structures}
+\end{figure}
+
+\subsection{Assumptions \& Constraints}
+
+\subsubsection*{Assumptions}
+\begin{itemize}
+  \item Fixed board size is 10x10; columns labeled A-J and rows 1-10.
+  \item The user selects the mine count at start; valid range is 10--20 and is validated before play begins.
+  \item First click is always safe: mines are placed (or adjusted) on the first uncover so the first clicked cell is not a mine.
+  \item Adjacency uses 8 neighbors for computing mine count.
+  \item Cell states are discrete and mutually consistent: \texttt{covered} vs.\ not; \texttt{flagged} implies not uncovered.
+  \item Game states are \texttt{START} $\rightarrow$ \texttt{PLAYING} $\rightarrow$ \texttt{END::WIN/LOSS} (with reset returning to \texttt{START}).
+  \item Primary inputs are mouse clicks for board actions and a simple keyboard field for mine count entry.
+\end{itemize}
+
+\subsubsection*{Constraints}
+\begin{itemize}
+  \item UI must be intuitive without a manual and display at least: grid, remaining mines (or flags), and current status (\texttt{Playing}, \texttt{Win}, \texttt{Loss}).
+  \item Performance/stability: the game must withstand rapid input (stress testing) without crashes or memory leaks; rendering should remain responsive.
+  \item Rules integrity: flagged cells cannot be uncovered; \texttt{flags\_remaining} stays within $[0, \texttt{total\_mines}]$; \texttt{remaining} decrements only when a safe cell is uncovered; mines occupy unique cells.
+  \item Scope limits (v1): only the specified 10x10 board; no alternative board sizes, timers, scoring, or difficulty presets beyond the user-selected mine count.
+  \item Process: demo must run from the \texttt{master} branch as of the code-freeze commit; system documentation and diagrams reside in the repository.
+  \item Testing: unit tests focus on first-click safety, neighbor counts, BFS zero-area reveal, flag gating, and win/loss detection.
+\end{itemize}
+
+\subsection{Extension Points}
+\text{}{Our group has included points of code that have great potential for upgrades, or new features. We've listed some:}
+\begin{itemize}
+    \item Difficulty preset: Consider using our method of determining total mines to pre-calculate difficulties that increase the amount of mines in an area, above our current mine limit.
+    \item Seed play: Instead of using RNG to generate a board each time, create a seed method that creates a board (some numerical combination), and anytime the seed is referenced, reproduces said board.
+    \item UI change: Consider altering the UI to better suit your group, display the play status differently, or display an entirely new statistic.
+\end{itemize}
+
+\section{Person-Hours Estimate (Methodology)}
+\subsection{Estimation Technique}
+We used a quantitative, team-based story point process. After decomposing the project into 27 tasks, each member estimated points (planning-poker style) and we took the consensus/median for the final value per task. We then prioritized the backlog with emphasis on higher-value and higher-risk items. In parallel, we computed a Use Case Points proxy: \textit{UUCP} \(=\) \textit{UUCW} \(+\) \textit{UAW} \(=\) 70, and applied a focus factor of 0.55 (time-boxed schedule, simple domain), yielding a working capacity of \(\approx 38.5\) team-points for the timebox. This capacity informed load balancing across six members and daily targets; we used it as guidance rather than a hard hours conversion to keep points relative.
+
+\subsection{Assumptions}
+We assume one synchronous Scrum meeting per week and 24/7 asynchronous coordination via group chat (“on call”). Team members complete delegated work, adhere to the rubric, and respect the code-freeze and demo requirements (master branch at the freeze commit).
+
+\subsection{Risks \& Buffers}
+Primary risks include correctness edge cases (first-click safety, BFS zero-region reveal, neighbor counts), input/UX gating by state, and stability under rapid input (performance or leaks). We reserve a stabilization buffer (10–15\% of the timebox), rely on deterministic tests, and schedule code reviews. If this is not enough to mitigate all the risk, we can also meet with our Scrum Master to discuss it further.
+
+\subsection{Estimated Hours by Task}
+Estimated hours per task are maintained in the repository alongside the backlog. The distribution follows the technique above (consensus story points, priority by value/risk) and reflects the 38.5 team-point capacity for the timebox.
+
+\section{Actual Person-Hours (Day-by-Day)}
+\subsection{Daily Log}
+Actual hours are recorded in the repository using two spreadsheets stored side by side: the Estimation log and the Actual Hours log. Each team member updates the Actual Hours log daily with brief entries (date, member, task, start/end, duration in integer increments). Project work only is counted (coding, testing, documentation, meetings); course lecture time is excluded. The sheet totals hours per week and project to date for each member. Reviewers can verify entries against visible project activity (commits near the code-freeze, pull requests, and demo readiness). This log is used for accountability and load balancing.
+
+\clearpage
+\section{System Diagrams}
+
+% Reproduced figures (no new numbers added)
+% These blocks do not use the figure environment, so numbering stays the same.
+
+\begin{center}
+\includegraphics[width=\textwidth]{full-path-diagram.png}
+
+\textbf{Figure \ref{fig:full-path-diagram}.} Full component interaction pathways (reproduced)
+\end{center}
+
+\bigskip
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{component-diagram.png}
+
+\textbf{Figure \ref{fig:component-diagram}.} Component Interaction Diagram (reproduced)
+\end{center}
+
+\bigskip
+
+\begin{center}
+\includegraphics[width=\textwidth]{game-flow-diagram.png}
+
+\textbf{Figure \ref{fig:game-flow}.} Game Flow Diagram (reproduced)
+\end{center}
+
+\bigskip
+
+\begin{center}
+\includegraphics[width=\textwidth]{structures-diagram.png}
+
+\textbf{Figure \ref{fig:structures}.} Data structures tabular representation (reproduced)
+\end{center}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\linewidth]{ui-diagram.png}
+\caption{Simple UI diagram to aid in core understanding}
+\label{fig:ui-diagram}
+\end{figure}
+
+
+
+\end{document}
