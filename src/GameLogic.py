@@ -7,10 +7,16 @@ random.seed(0)
 
 class Cell:
   def __init__(self):
-    self.covered = True
+    self.is_covered = True
     self.flagged = False
-    self.mine = False
-    self.nearby = 0
+    self.is_mine = False
+    self.neighbor_count = 0
+
+  def reset(self):
+    self.is_covered = True
+    self.flagged = False
+    self.is_mine = False
+    self.neighbor_count = 0
 
 
 class GameState(enum.Enum):
@@ -58,6 +64,14 @@ class GameLogic:
     else:
       self.state = GameState.EndLose
 
+  def reset_game(self, win: EndCondition):
+    # self.board.reset()
+
+    self.state: GameState = GameState.Start
+    self.total_mines: int = 0
+    self.flags_remaining: int = 0
+    self.covered_cells: int = 0
+
   def convert_coord_to_indices(self, id) -> tuple[int, int]:
     return (id // 10, id % 10)
 
@@ -71,24 +85,24 @@ class GameLogic:
     return 0 <= row <= 9 and 0 <= col <= 9
 
   def place_mine(self, row, col):
-    self.board[row][col].mine = True
+    self.board[row][col].is_mine = True
     for i in range(row - 1, row + 2):
       for j in range(col - 1, col + 2):
         if self.valid_position(i, j):
-          self.board[i][j].nearby += 1
+          self.board[i][j].neighbor_count += 1
 
   def remove_mine(self, row, col):
-    self.board[row][col].mine = False
+    self.board[row][col].is_mine = False
     for i in range(row - 1, row + 2):
       for j in range(col - 1, col + 2):
         if self.valid_position(i, j):
-          self.board[i][j].nearby -= 1
+          self.board[i][j].neighbor_count -= 1
 
   def uncover_first_cell(self, old_row, old_col):
     while True:
       new_row, new_col = self.convert_coord_to_indices(random.randrange(100))
       new_cell = self.board[new_row][new_col]
-      if not new_cell.mine:
+      if not new_cell.is_mine:
         self.place_mine(new_row, new_col)
         break
     self.remove_mine(old_row, old_col)
@@ -96,16 +110,16 @@ class GameLogic:
   def uncover_cell(self, row, col, first_cell: bool = False):
     cell = self.board[row][col]
 
-    if first_cell and cell.mine:
+    if first_cell and cell.is_mine:
       self.uncover_first_cell(row, col)
 
-    if cell.mine:
+    if cell.is_mine:
       self.end_game(EndCondition.Loss)
     else:
-      cell.covered = False
+      cell.is_covered = False
       self.covered_cells -= 1
 
-      if cell.nearby:
+      if cell.neighbor_count:
         return
 
       for i in range(row - 1, row + 2):
@@ -113,7 +127,7 @@ class GameLogic:
           if not self.valid_position(i, j):
             continue
           cell = self.board[i][j]
-          if not cell.mine and cell.covered:
+          if not cell.is_mine and cell.is_covered:
             self.uncover_cell(i, j)
 
     if self.covered_cells == 0:
@@ -135,13 +149,13 @@ class GameLogic:
       for cell in row:
         if cell.flagged:
           print(" ", end="")
-        if not debug and cell.covered:
+        if not debug and cell.is_covered:
           print(" ", end="")
           continue
-        if cell.mine:
+        if cell.is_mine:
           print(" ", end="")
         else:
-          print(f"{cell.nearby} ", end="")
+          print(f"{cell.neighbor_count} ", end="")
       print("")
 
   def __repr__(self):
