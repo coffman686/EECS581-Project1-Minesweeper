@@ -31,8 +31,13 @@ class EndCondition(enum.Enum):
   Loss = False
 
 
-type Board = list[list[Cell]]
+class ToggleMine(enum.Enum):
+  Place = 1
+  Remove = -1
 
+
+# stub for BoardManager
+type Board = list[list[Cell]]
 
 # stub for board
 board = []
@@ -79,33 +84,32 @@ class GameLogic:
     mines_coordinates = random.sample(range(100), k=self.total_mines)
     for coord in mines_coordinates:
       row, col = self.convert_coord_to_indices(coord)
-      self.place_mine(row, col)
+      self.toggle_mine(row, col)
 
   def valid_position(self, row, col):
     return 0 <= row <= 9 and 0 <= col <= 9
 
-  def place_mine(self, row, col):
-    self.board[row][col].is_mine = True
+  # toggles a given cell as a mine and updates its neighbors' neighbor_count
+  def toggle_mine(self, row, col):
+    cell = self.board[row][col]
+    # decrement if removing mine, increment if placing mine
+    inc = -1 if cell.is_mine else 1
+    cell.is_mine = not cell.is_mine
     for i in range(row - 1, row + 2):
       for j in range(col - 1, col + 2):
         if self.valid_position(i, j):
-          self.board[i][j].neighbor_count += 1
-
-  def remove_mine(self, row, col):
-    self.board[row][col].is_mine = False
-    for i in range(row - 1, row + 2):
-      for j in range(col - 1, col + 2):
-        if self.valid_position(i, j):
-          self.board[i][j].neighbor_count -= 1
+          self.board[i][j].neighbor_count += inc
 
   def uncover_first_cell(self, old_row, old_col):
     while True:
       new_row, new_col = self.convert_coord_to_indices(random.randrange(100))
       new_cell = self.board[new_row][new_col]
       if not new_cell.is_mine:
-        self.place_mine(new_row, new_col)
+        # toggle and place a mine at the new cell
+        self.toggle_mine(new_row, new_col)
         break
-    self.remove_mine(old_row, old_col)
+    # remove the mine at the original location
+    self.toggle_mine(old_row, old_col)
 
   def uncover_cell(self, row, col, first_cell: bool = False):
     cell = self.board[row][col]
