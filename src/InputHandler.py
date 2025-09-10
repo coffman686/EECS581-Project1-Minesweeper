@@ -2,20 +2,24 @@ import pygame
 import enum
 from GameLogic import GameLogic, GameState, Cell
 
+# enum to handle the type of response given by the input handler
 class ResponseCode(enum.Enum):
     Finished = 0
     Failed = 1
     InProgress = 2
     Ignored = 3
 
+# response object designed to package and send input handling results
 class Response:
     def __init__(self, game, response_code, message=''):
         self.game: GameLogic = game
         self.response_code: ResponseCode = response_code
         self.message: str = message
 
-
+# input handler class for handling both keyboard inputs and mouse click inputs
 class InputHandler:
+    # Keyboard input handling
+    # Will be used at the beginning of the game when user enters number of mines
     def handle_keyboard_input(self, game, event, text):
         if game.state != GameState.Start:
             return Response(game, ResponseCode.Ignored, "Game must be in starting state")
@@ -41,6 +45,9 @@ class InputHandler:
                 return Response(game, ResponseCode.InProgress, text)
         return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
 
+    # Function to handle mouse clicks
+    # This will be used to handle cell clearing, cell flagging, and resetting
+    # Todo -> Add code to handle when user clicks to reset game
     def handle_click(self, game, event):
         if game.state != GameState.Playing:
             return Response(game, ResponseCode.Ignored, "Game must be in progress")
@@ -53,12 +60,10 @@ class InputHandler:
                 # if left click -> uncover mine
                 if event.button == 1:
                     game.uncover_cell(row=y, col=x)
-                    #temp print statement for testing
                     return Response(game, ResponseCode.Finished, f"Uncovered cell at ({x}, {y})")
                 # if right click -> toggle flag
                 elif event.button == 3:
                     game.toggle_flagged_cell(row=y, col=x)
-                    #temp print statement for testing
                     return Response(game, ResponseCode.Finished, f"Toggled flag at ({x}, {y})")
                 else:
                     return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
@@ -66,6 +71,9 @@ class InputHandler:
                 return Response(game, ResponseCode.Ignored, "Click out of range")
         else:
             return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
+
+
+# The following code is temporary and is used for testing
 
 # stub for BoardManager
 type Board = list[list[Cell]]
