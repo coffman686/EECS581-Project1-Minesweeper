@@ -101,6 +101,10 @@ class GameLogic:
           self.board[i][j].neighbor_count += inc
 
   def uncover_first_cell(self, old_row, old_col):
+    # continue normal processing if the cell is already safe
+    if not self.board[old_row][old_col].is_mine:
+      return
+
     while True:
       new_row, new_col = self.convert_coord_to_indices(random.randrange(100))
       new_cell = self.board[new_row][new_col]
@@ -114,7 +118,8 @@ class GameLogic:
   def uncover_cell(self, row, col, first_cell: bool = False):
     cell = self.board[row][col]
 
-    if first_cell and cell.is_mine:
+    # uncover the first cell safely
+    if first_cell:
       self.uncover_first_cell(row, col)
 
     if cell.is_mine:
