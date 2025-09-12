@@ -29,53 +29,48 @@ class GameLogic:
     self.covered_cells: int = 0
     self.board = BoardManager()
 
-  # sets the total number of mines to be placed
-  def set_mines(self, mines):
+  def set_mines(self, mines: int):
+    """sets the total number of mines to be placed"""
     self.total_mines = mines
     self.flags_remaining = mines
     self.covered_cells = 100 - mines
 
-  # moves the game to the playing state and places mines
   def start_game(self):
+    """moves the game to the playing state and places mines"""
     self.state = GameState.Playing
     self.initialize_board()
 
-  # ends game on win or loss based on passed condition
-  def end_game(self, win: EndCondition):
-    if win == EndCondition.Win:
+  def end_game(self, condition: EndCondition):
+    """ends game based on passed condition"""
+    if condition == EndCondition.Win:
       self.state = GameState.EndWin
     else:
       self.state = GameState.EndLose
 
-  # resets the game state and the board state
-  def reset_game(self, win: EndCondition):
+  def reset_game(self):
+    """resets the game state and the board state"""
     self.board.reset()
+    self.state = GameState.Start
+    self.total_mines = 0
+    self.flags_remaining = 0
+    self.covered_cells = 0
 
-    self.state: GameState = GameState.Start
-    self.total_mines: int = 0
-    self.flags_remaining: int = 0
-    self.covered_cells: int = 0
-
-  # converts ordered cell ids to indices
-  def convert_coord_to_indices(self, id) -> tuple[int, int]:
-    return (id // 10, id % 10)
-
-  # samples and places mines in random locations
   def initialize_board(self):
+    """samples and places mines in random locations"""
     mines_coordinates = random.sample(range(100), k=self.total_mines)
     for coord in mines_coordinates:
-      row, col = self.convert_coord_to_indices(coord)
+      row, col = coord // 10, coord % 10
       self.board.toggle_mine(row, col)
 
-  # safely uncover the first cell
-  def uncover_first_cell(self, old_row, old_col):
+  def uncover_first_cell(self, old_row: int, old_col: int):
+    """safely uncover the first cell"""
     # continue normal processing if the cell is already safe
     if not self.board.cell(old_row, old_col).is_mine:
       return
 
     while True:
       # pick a random cell
-      new_row, new_col = self.convert_coord_to_indices(random.randrange(100))
+      new_row, new_col = random.randrange(10), random.randrange(10)
       new_cell = self.board.cell(new_row, new_col)
       # check that the cell does not already has a mine
       # prevents reselecting the same cell the user has
@@ -86,8 +81,8 @@ class GameLogic:
     # remove the mine at the original location
     self.board.toggle_mine(old_row, old_col)
 
-  # uncover a selected cell
-  def uncover_cell(self, row, col, first_cell: bool = False):
+  def uncover_cell(self, row: int, col: int, first_cell: bool = False):
+    """uncover a selected cell"""
     cell = self.board.cell(row, col)
 
     # uncover the first cell safely
@@ -118,8 +113,8 @@ class GameLogic:
     if self.covered_cells == 0:
       self.end_game(EndCondition.Win)
 
-  # toggles a flag with flag count validation
-  def toggle_flagged_cell(self, row, col):
+  def toggle_flagged_cell(self, row: int, col: int):
+    """toggles flagged state with flag count validation"""
     cell = self.board.cell(row, col)
     if cell.flagged:
       self.board.set_flag(row, col, False)
