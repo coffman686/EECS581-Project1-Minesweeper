@@ -1,10 +1,7 @@
 import random
 import enum
 
-from BoardManager import BoardManager, Cell
-
-# TODO: remove random seeding
-random.seed(0)
+from BoardManager import BoardManager
 
 
 class GameState(enum.Enum):
@@ -22,17 +19,6 @@ class EndCondition(enum.Enum):
 class ToggleMine(enum.Enum):
   Place = 1
   Remove = -1
-
-
-# stub for BoardManager
-type Board = list[list[Cell]]
-
-board = []
-for _ in range(10):
-  row = []
-  for _ in range(10):
-    row.append(Cell())
-  board.append(row)
 
 
 class GameLogic:
@@ -141,45 +127,3 @@ class GameLogic:
     elif self.flags_remaining > 0:
       self.board.set_flag(row, col, True)
       self.flags_remaining -= 1
-
-  # temporary helpers for user interface
-  def print_board(self, debug: bool = False):
-    for row in self.board.grid:
-      for cell in row:
-        if cell.flagged:
-          print(" ", end="")
-        if not debug and cell.is_covered:
-          print(" ", end="")
-          continue
-        if cell.is_mine:
-          print(" ", end="")
-        else:
-          print(f"{cell.neighbor_count} ", end="")
-      print("")
-
-  def __repr__(self):
-    print(self.state)
-    self.print_board(debug=True)
-    return ""
-
-
-logic = GameLogic(board)
-logic.set_mines(10)
-logic.start_game()
-
-logic.print_board(True)
-
-# stub for UserInterface and InputHandler
-first = True
-while True:
-  logic.print_board()
-  inp = int(input("Enter coordinate:"))
-  row, col = logic.convert_coord_to_indices(inp)
-
-  logic.uncover_cell(row, col, first)
-  if first:
-    first = False
-
-  if logic.state == GameState.EndWin or logic.state == GameState.EndLose:
-    print("Win!")
-    break
