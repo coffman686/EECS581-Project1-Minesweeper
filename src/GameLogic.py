@@ -56,7 +56,7 @@ class GameLogic:
 
   # ends game on win or loss based on passed condition
   def end_game(self, win: EndCondition):
-    if win:
+    if win == EndCondition.Win:
       self.state = GameState.EndWin
     else:
       self.state = GameState.EndLose
