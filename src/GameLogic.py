@@ -136,13 +136,11 @@ class GameLogic:
   def toggle_flagged_cell(self, row, col):
     cell = self.board.cell(row, col)
     if cell.flagged:
-      if self.flags_remaining > 0:
-        self.board.set_flag(row, col, False)
-        self.flags_remaining -= 1
-    else:
-      if self.flags_remaining < 10:
-        self.board.set_flag(row, col, True)
-        self.flags_remaining += 1
+      self.board.set_flag(row, col, False)
+      self.flags_remaining += 1
+    elif self.flags_remaining > 0:
+      self.board.set_flag(row, col, True)
+      self.flags_remaining -= 1
 
   # temporary helpers for user interface
   def print_board(self, debug: bool = False):
