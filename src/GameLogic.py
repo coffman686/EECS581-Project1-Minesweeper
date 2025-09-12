@@ -1,22 +1,10 @@
 import random
 import enum
 
+from BoardManager import BoardManager, Cell
+
 # TODO: remove random seeding
 random.seed(0)
-
-
-class Cell:
-  def __init__(self):
-    self.is_covered = True
-    self.flagged = False
-    self.is_mine = False
-    self.neighbor_count = 0
-
-  def reset(self):
-    self.is_covered = True
-    self.flagged = False
-    self.is_mine = False
-    self.neighbor_count = 0
 
 
 class GameState(enum.Enum):
@@ -48,12 +36,12 @@ for _ in range(10):
 
 
 class GameLogic:
-  def __init__(self, board):
+  def __init__(self):
     self.state: GameState = GameState.Start
     self.total_mines: int = 0
     self.flags_remaining: int = 0
     self.covered_cells: int = 0
-    self.board: list[list[Cell]] = board
+    self.board = BoardManager()
 
   # sets the total number of mines to be placed
   def set_mines(self, mines):
@@ -74,7 +62,7 @@ class GameLogic:
 
   # resets the game state and the board state
   def reset_game(self, win: EndCondition):
-    # self.board.reset()
+    self.board.reset()
 
     self.state: GameState = GameState.Start
     self.total_mines: int = 0
@@ -90,45 +78,30 @@ class GameLogic:
     mines_coordinates = random.sample(range(100), k=self.total_mines)
     for coord in mines_coordinates:
       row, col = self.convert_coord_to_indices(coord)
-      self.toggle_mine(row, col)
-
-  # validates a given row and col within the board limits
-  def valid_position(self, row, col):
-    return 0 <= row <= 9 and 0 <= col <= 9
-
-  # toggles a given cell as a mine and updates its neighbors' neighbor_count
-  def toggle_mine(self, row, col):
-    cell = self.board[row][col]
-    # decrement if removing mine, increment if placing mine
-    inc = -1 if cell.is_mine else 1
-    cell.is_mine = not cell.is_mine
-    for i in range(row - 1, row + 2):
-      for j in range(col - 1, col + 2):
-        if self.valid_position(i, j):
-          self.board[i][j].neighbor_count += inc
+      self.board.toggle_mine(row, col)
 
   # safely uncover the first cell
   def uncover_first_cell(self, old_row, old_col):
     # continue normal processing if the cell is already safe
-    if not self.board[old_row][old_col].is_mine:
+    if not self.board.cell(old_row, old_col).is_mine:
       return
 
     while True:
       # pick a random cell
       new_row, new_col = self.convert_coord_to_indices(random.randrange(100))
-      new_cell = self.board[new_row][new_col]
+      new_cell = self.board.cell(new_row, new_col)
       # check that the cell does not already has a mine
       # prevents reselecting the same cell the user has
       if not new_cell.is_mine:
-        # toggle and place a mine at the new cell
-        self.toggle_mine(new_row, new_col)
+        # place a mine at the new cell
+        self.board.toggle_mine(new_row, new_col)
         break
     # remove the mine at the original location
-    self.toggle_mine(old_row, old_col)
+    self.board.toggle_mine(old_row, old_col)
 
   # uncover a selected cell
   def uncover_cell(self, row, col, first_cell: bool = False):
-    cell = self.board[row][col]
+    cell = self.board.cell(row, col)
 
     # uncover the first cell safely
     if first_cell:
@@ -138,7 +111,7 @@ class GameLogic:
       self.end_game(EndCondition.Loss)
     else:
       # uncover the cell
-      cell.is_covered = False
+      self.board.uncover(row, col)
       self.covered_cells -= 1
 
       # end if the cell has neighboring mines
@@ -146,13 +119,13 @@ class GameLogic:
         return
 
       # recursively uncover neighbors
-      for i in range(row - 1, row + 2):
-        for j in range(col - 1, col + 2):
-          if not self.valid_position(i, j):
-            continue
-          cell = self.board[i][j]
-          if not cell.is_mine and cell.is_covered:
-            self.uncover_cell(i, j)
+      adjacent = [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)]
+      for i, j in adjacent:
+        if not self.board.in_bounds(i, j):
+          continue
+        cell = self.board.cell(i, j)
+        if not cell.is_mine and cell.is_covered:
+          self.uncover_cell(i, j)
 
     # check whether the user has uncovered all cells
     if self.covered_cells == 0:
@@ -160,19 +133,19 @@ class GameLogic:
 
   # toggles a flag with flag count validation
   def toggle_flagged_cell(self, row, col):
-    cell = self.board[row][col]
+    cell = self.board.cell(row, col)
     if cell.flagged:
       if self.flags_remaining > 0:
-        cell.flagged = False
+        self.board.set_flag(row, col, False)
         self.flags_remaining -= 1
     else:
       if self.flags_remaining < 10:
-        cell.flagged = True
+        self.board.set_flag(row, col, True)
         self.flags_remaining += 1
 
   # temporary helpers for user interface
   def print_board(self, debug: bool = False):
-    for row in self.board:
+    for row in self.board.grid:
       for cell in row:
         if cell.flagged:
           print(" ", end="")
