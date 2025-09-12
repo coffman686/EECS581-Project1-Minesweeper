@@ -46,6 +46,7 @@ class GameLogic:
   # sets the total number of mines to be placed
   def set_mines(self, mines):
     self.total_mines = mines
+    self.flags_remaining = mines
     self.covered_cells = 100 - mines
 
   # moves the game to the playing state and places mines
