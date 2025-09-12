@@ -47,15 +47,10 @@ class InputHandler:
 
     # Function to handle mouse clicks
     # This will be used to handle cell clearing, cell flagging, and resetting
-    # Todo -> Add code to handle when user clicks to reset game
-    def handle_click(self, game, event):
+    def handle_click(self, game, event, x, y):
         if game.state != GameState.Playing:
             return Response(game, ResponseCode.Ignored, "Game must be in progress")
         if event.type == pygame.MOUSEBUTTONDOWN:
-            click_x, click_y = event.pos
-            # convert to x and y to be in range [0,10]
-            # this is under the assumption that the window size is 500x500, which can always be changed
-            x, y = click_x // 50, click_y // 50
             if game.valid_position:
                 # if left click -> uncover mine
                 if event.button == 1:
