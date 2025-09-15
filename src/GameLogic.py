@@ -1,3 +1,10 @@
+# Module: GameLogic
+# Description: handles base game functionality and management of state
+# Inputs: None
+# Outputs: None
+# External sources: None
+# Created ~2025-09-05 by Aryan Kevat
+
 import random
 import enum
 
