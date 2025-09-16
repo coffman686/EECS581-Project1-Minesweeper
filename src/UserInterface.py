@@ -39,10 +39,13 @@ pygame.display.set_caption("MineSweeper")
 screen.fill("white") 
 clock = pygame.time.Clock()
 
+
 # fonts
 title_font = pygame.font.SysFont("arialblack", 60)
 mine_count_font = pygame.font.SysFont("arialblack", 15)
+mine_prompt_font = pygame.font.SysFont("arialblack", 15)
 win_loss_font = pygame.font.SysFont("arialblack", 30)
+
 
 # function to load all assets in assets folder into a dict that scores path to png
 def load_assets():
@@ -55,13 +58,16 @@ def load_assets():
         assets[png] = asset
     return assets
 
+
 # iterate through game board to render 10 x 10 grid on screen
 def render_board():
     
     y = BOARD_DISTANCE_DOWN
 
     for row in range(10):
+
         x = BOARD_DISTANCE_LEFT
+
         for col in range(10):
 
             # render all uncovered mines on game start
@@ -110,6 +116,8 @@ def coords_to_index(coords):
     # if clicked within grid return coords
     if 0 <= row <= 9 and 0 <= col <= 9:
         return(row, col)
+    else:
+        return False
     
 
 def draw_title():
@@ -149,7 +157,6 @@ def render_win_or_loss():
     screen.blit(result, result_rect)
 
 
-
 def render_ui():
     # reset screen with updated ui
     screen.fill(WHITE)              
@@ -159,92 +166,74 @@ def render_ui():
     render_win_or_loss()
 
 
-"""
-mine_input_box = pygame.Rect(SCREEN_WIDTH//2 - 70, 250, 140, 40)
-active = False
-color_inactive = pygame.Color('lightskyblue3')
-color_active = pygame.Color('dodgerblue2')
-color = color_inactive
-text = ''
-"""
-
-# INITIALIZE GAME
-
-game.set_mines(10) ## AUTO SET MINES FOR NOW
-game.start_game()
-
-draw_title()
-update_mine_counter()
-assets = load_assets()
-render_board()
-
-
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-            """
-        elif event.type == pygame.KEYDOWN and active:
-            if event.key == pygame.K_RETURN:
-                print(text)  
-                text = ''
-            elif event.key == pygame.K_BACKSPACE:
-                text = text[:-1]
-            else:
-                text += event.unicode
-            """
-
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left click
-            """
-            if mine_input_box.collidepoint(event.pos):
-                active = True
-            else:
-                active = False
-            color = color_active if active else color_inactive
-            """
-            coords = coords_to_index(event.pos)
-            x, y = coords
-            response = input_handler.handle_click(game, event, x, y)
-            # NOTE: send click type and coords to input handler
-            print(f"Left click at: {coords_to_index(event.pos)}")
-            # after input is sent and handled, render board, update mine counter, check for win/loss
-            render_ui()
-
-            
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3: # right click
-            # NOTE: send click type and coords to input handler
-            coords = coords_to_index(event.pos)
-            x, y = coords
-            response = input_handler.handle_click(game, event, x, y)
-            print(f"Right click at: {coords_to_index(event.pos)}")
-            # after input is sent and handled, render board, update mine counter, check for win/loss
-            render_ui()
-
-    """
-    render_ui()
-
-    label = mine_count_font.render("Enter number of mines (10-20), then press ENTER:", True, BLACK)
+def render_start_ui(text, message, cover_color):
+    # write text box that states invalid input
+    message_box = mine_prompt_font.render(message, True, cover_color)
+    message_rect = message_box.get_rect(center=(SCREEN_WIDTH//2, 700))
+    screen.blit(message_box, message_rect)
+    
+    # write text box that states "Enter number of mines (10-20), then press ENTER:"
+    label = mine_prompt_font.render("Enter number of mines (10-20), then press ENTER:", True, cover_color)
     label_rect = label.get_rect(center=(SCREEN_WIDTH//2, 220))
     screen.blit(label, label_rect)
 
+    # draw input text box 
+    mine_input_box = pygame.Rect(SCREEN_WIDTH//2 - 70, 250, 140, 40)
+    pygame.draw.rect(screen, cover_color, mine_input_box, 2)
 
-    # Draw text box rectangle
-    pygame.draw.rect(screen, color, mine_input_box, 2)
-
-    # Render text inside the box
-    txt_surface = mine_count_font.render(text, True, BLACK)
+    # render text inside the box
+    txt_surface = mine_prompt_font.render(text, True, BLACK)
     text_rect = txt_surface.get_rect(center=(SCREEN_WIDTH // 2, 265))
     screen.blit(txt_surface, text_rect)
-    """
-    
-            
+
+
+
+text = '' #user input
+message = '' #response from user input
+cover_color = 'BLACK' # used to cover objects after game is initialized
+
+assets = load_assets() # load assets from asset folder
+
+render_ui() # initial render 
+
+running = True
+while running: # game event loop
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: # exit loop if game is terminated
+            running = False
+
+        if game.state.name == "Start": # before starting game
+
+            render_ui() # refresh screen
+
+            if event.type == pygame.KEYDOWN: # when a key is pressed
+
+                response = input_handler.handle_keyboard_input(game, event, text) # send event to input handler 
+                text = response.message # get input from input handler's response
+                
+                if response.response_code.value == 0: # if input is sucessful
+                    cover_color = "WHITE" # change cover color to white to clear initial UI text boxes
+                    text = "Start by Clicking Any Tile"
+                    render_ui() # refresh screen for updated mine count
+                    game.start_game() # start game
+
+                elif response.response_code.value == 1: # if input is invalid
+                    message = text # set message to invalid response text
+                    text = "" # clear user input
+
+            render_start_ui(text, message, cover_color) # render all of the pre-game ui elements
+                
+        elif game.state.name == "Playing": # once game has started   
+                
+            if event.type == pygame.MOUSEBUTTONDOWN: 
+                coords = coords_to_index(event.pos) # convert click to coords on grid
+                if coords: # if valid coords
+                    x, y = coords
+                    response = input_handler.handle_click(game, event, x, y) # send input to input handler
+
+                render_ui() # after input is sent and handled, render board, update mine counter, check for win/loss
 
     pygame.display.flip()
     clock.tick(60)
-
-
-
 
 pygame.quit()
