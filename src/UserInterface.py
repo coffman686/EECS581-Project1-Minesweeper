@@ -10,18 +10,10 @@ Creation Date: 09/07/25
 """
 
 import pygame
-from GameLogic import GameLogic, GameState, Cell
+from GameLogic import GameLogic
 from InputHandler import InputHandler
 
-
-board = []
-for _ in range(10):
-  row = []
-  for _ in range(10):
-    row.append(Cell())
-  board.append(row)
-  
-game = GameLogic(board)
+game = GameLogic()
 input_handler = InputHandler()
 
 # game variables
@@ -78,26 +70,26 @@ def render_board():
 
             else:
                 # flagged = True -> render flagged tile asset
-                if board[row][col].flagged:
+                if game.board.grid[row][col].flagged:
                     screen.blit(assets["flagged_tile"], (x,y))
                 # is_covered = True -> render unexplored tile
-                elif board[row][col].is_covered: 
+                elif game.board.grid[row][col].is_covered: 
                     screen.blit(assets["unexplored_tile"], (x,y))
 
                 # NOTE: This assumes that if neighbor_count is 0, then that cell is not an uncovered cell adjacent to a covered cell
                 # In other words, if neighbor_count is > 0, I am assuming it will render as a number cell, not an explored cell
                 # if cell has neighboring bombs, display # of bombs
-                elif board[row][col].neighbor_count > 0:
-                    num = str(board[row][col].neighbor_count) # sets num to str of asset name for number of neighboring mines
+                elif game.board.grid[row][col].neighbor_count > 0:
+                    num = str(game.board.grid[row][col].neighbor_count) # sets num to str of asset name for number of neighboring mines
                     screen.blit(assets[num], (x,y)) # need to account for all nums
 
                 # is_covered = False -> render explored tile
-                elif not board[row][col].is_covered:
+                elif not game.board.grid[row][col].is_covered:
                     screen.blit(assets["tile"], (x,y))
                 
                 # win or lose game, reveal all bombs
                 if game.state.name == "EndLose" or game.state.name == "EndWin":
-                    if board[row][col].is_mine: 
+                    if game.board.grid[row][col].is_mine: 
                         screen.blit(assets["tile"], (x,y)) # reset to blank tile 
                         screen.blit(assets["mine"], (x,y)) # add mine over tile
             

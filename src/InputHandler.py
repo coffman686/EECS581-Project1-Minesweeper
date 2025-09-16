@@ -1,6 +1,6 @@
 import pygame
 import enum
-from GameLogic import GameLogic, GameState, Cell
+from GameLogic import GameLogic, GameState
 
 # enum to handle the type of response given by the input handler
 class ResponseCode(enum.Enum):
@@ -51,23 +51,23 @@ class InputHandler:
         if game.state != GameState.Playing:
             return Response(game, ResponseCode.Ignored, "Game must be in progress")
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if game.valid_position:
+            #if game.valid_position:
                 # if left click -> uncover mine
-                if event.button == 1:
-                    game.uncover_cell(row=y, col=x)
-                    return Response(game, ResponseCode.Finished, f"Uncovered cell at ({x}, {y})")
-                # if right click -> toggle flag
-                elif event.button == 3:
-                    game.toggle_flagged_cell(row=y, col=x)
-                    return Response(game, ResponseCode.Finished, f"Toggled flag at ({x}, {y})")
-                else:
-                    return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
+            if event.button == 1:
+                game.uncover_cell(row=y, col=x)
+                return Response(game, ResponseCode.Finished, f"Uncovered cell at ({x}, {y})")
+            # if right click -> toggle flag
+            elif event.button == 3:
+                game.toggle_flagged_cell(row=y, col=x)
+                return Response(game, ResponseCode.Finished, f"Toggled flag at ({x}, {y})")
             else:
-                return Response(game, ResponseCode.Ignored, "Click out of range")
+                return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
+            #else:
+                #return Response(game, ResponseCode.Ignored, "Click out of range")
         else:
             return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
 
-
+"""
 # The following code is temporary and is used for testing
 
 # stub for BoardManager
@@ -160,3 +160,4 @@ def test_keyboard_input():
 test_keyboard_input()
         
         
+"""
