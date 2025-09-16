@@ -52,3 +52,5 @@ pytest_cache/
 /dataSources/
 /dataSources.local.xml
 .DS_Store
+
+__pycache__/
