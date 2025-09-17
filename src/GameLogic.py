@@ -1,3 +1,10 @@
+# Module: GameLogic
+# Description: handles base game functionality and management of state
+# Inputs: None
+# Outputs: None
+# External sources: None
+# Created ~2025-09-05 by Aryan Kevat
+
 import random
 import enum
 
@@ -81,12 +88,12 @@ class GameLogic:
     # remove the mine at the original location
     self.board.toggle_mine(old_row, old_col)
 
-  def uncover_cell(self, row: int, col: int, first_cell: bool = False):
+  def uncover_cell(self, row: int, col: int):
     """uncover a selected cell"""
     cell = self.board.cell(row, col)
 
     # uncover the first cell safely
-    if first_cell:
+    if self.covered_cells == 100 - self.total_mines:
       self.uncover_first_cell(row, col)
 
     if cell.is_mine:
