@@ -74,6 +74,7 @@ def render_board():
             if game.state.name == "Start":
                 screen.blit(assets["unexplored_tile"], (x,y))
 
+
             else:
                 # flagged = True -> render flagged tile asset
                 if game.board.grid[row][col].flagged:
@@ -119,6 +120,15 @@ def coords_to_index(coords):
     else:
         return False
     
+def restart_to_start():
+    #Return to the Start screen (prompt for mine count again)
+    global game, text, message, cover_color
+    game.reset_game()     # your GameLogic.reset_game()
+    text = ""             # clear input buffer
+    message = ""          # clear any prior message
+    cover_color = "BLACK" # so the start UI text boxes render
+    render_ui()
+    
 
 def draw_title():
     title_text = "Minesweeper"
@@ -146,15 +156,20 @@ def update_mine_counter():
 
 def render_win_or_loss():
     if game.state.name == "EndLose":
-       text = "YOU LOSE :("
+       title = "YOU LOSE :("
     elif game.state.name == "EndWin":
-       text = "YOU WIN :)"
+       title = "YOU WIN :)"
     else:
        return
 
-    result = win_loss_font.render(text, True, BLACK)
+    result = win_loss_font.render(title, True, BLACK)
     result_rect = result.get_rect(center=(SCREEN_WIDTH // 2, 250))
     screen.blit(result, result_rect)
+
+    hint_font = pygame.font.SysFont("arialblack", 20)
+    hint = hint_font.render("Press R to restart", True, BLACK)
+    screen.blit(hint, hint.get_rect(center=(SCREEN_WIDTH // 2, 285)))
+
 
 
 def render_ui():
@@ -232,6 +247,11 @@ while running: # game event loop
                     response = input_handler.handle_click(game, event, x, y) # send input to input handler
 
                 render_ui() # after input is sent and handled, render board, update mine counter, check for win/loss
+                
+        elif game.state.name in ("EndLose", "EndWin"):
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                restart_to_start()  # sets state back to Start, clears UI vars
+            render_ui()  # shows end screen; your render_board() reveals bombs while in End*
 
     pygame.display.flip()
     clock.tick(60)
