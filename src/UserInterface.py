@@ -9,6 +9,7 @@ Author: Hale Coffman
 Creation Date: 09/07/25
 """
 
+import sys, os
 import pygame
 from GameLogic import GameLogic
 from InputHandler import InputHandler
@@ -46,13 +47,25 @@ mine_count_font = pygame.font.SysFont("arialblack", 15)
 mine_prompt_font = pygame.font.SysFont("arialblack", 15)
 win_loss_font = pygame.font.SysFont("arialblack", 30)
 
+def resource_path(rel_path: str) -> str:
+    """
+    Return an absolute path to a resource, working in dev and in PyInstaller.
+    In dev: relative to this file's directory.
+    In bundle: relative to the unpacked temp dir (sys._MEIPASS).
+    """
+    if hasattr(sys, "_MEIPASS"):               # PyInstaller onefile
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))  # <--- key change
+    return os.path.join(base_path, rel_path)
+
 
 # function to load all assets in assets folder into a dict that scores path to png
 def load_assets():
     assets = {}
     pngs = ["tile", "unexplored_tile", "mine", "flagged_tile", "exploding_mine", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     for png in pngs:
-        path = f"src/assets/{png}.png"
+        path = resource_path(os.path.join("assets", f"{png}.png"))
         asset = pygame.image.load(path)
         asset = pygame.transform.scale(asset, CELL_SIZE) # resize asset to cell size
         assets[png] = asset
@@ -247,7 +260,7 @@ while running: # game event loop
                     response = input_handler.handle_click(game, event, x, y) # send input to input handler
 
                 render_ui() # after input is sent and handled, render board, update mine counter, check for win/loss
-                
+
         elif game.state.name in ("EndLose", "EndWin"):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 restart_to_start()  # sets state back to Start, clears UI vars
