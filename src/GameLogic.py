@@ -92,6 +92,9 @@ class GameLogic:
     """uncover a selected cell"""
     cell = self.board.cell(row, col)
 
+    if not cell.is_covered:
+      return
+
     if cell.flagged:
       return
 
