@@ -169,11 +169,11 @@ def update_mine_counter():
 
 def render_win_or_loss():
     if game.state.name == "EndLose":
-       title = "YOU LOSE :("
+        title = "YOU LOSE :("
     elif game.state.name == "EndWin":
-       title = "YOU WIN :)"
+        title = "YOU WIN :)"
     else:
-       return
+        return
 
     result = win_loss_font.render(title, True, BLACK)
     result_rect = result.get_rect(center=(SCREEN_WIDTH // 2, 250))
