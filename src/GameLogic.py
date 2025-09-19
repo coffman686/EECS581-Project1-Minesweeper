@@ -92,6 +92,9 @@ class GameLogic:
     """uncover a selected cell"""
     cell = self.board.cell(row, col)
 
+    if cell.flagged:
+      return
+
     # uncover the first cell safely
     if self.covered_cells == 100 - self.total_mines:
       self.uncover_first_cell(row, col)
