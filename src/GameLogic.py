@@ -33,14 +33,13 @@ class GameLogic:
     self.state: GameState = GameState.Start
     self.total_mines: int = 0
     self.flags_remaining: int = 0
-    self.covered_cells: int = 0
     self.board = BoardManager()
+    self.covered_cells: int = self.board.rows * self.board.cols
 
   def set_mines(self, mines: int):
     """sets the total number of mines to be placed"""
     self.total_mines = mines
     self.flags_remaining = mines
-    self.covered_cells = 100 - mines
 
   def start_game(self):
     """moves the game to the playing state and places mines"""
@@ -60,7 +59,7 @@ class GameLogic:
     self.state = GameState.Start
     self.total_mines = 0
     self.flags_remaining = 0
-    self.covered_cells = 0
+    self.covered_cells = self.board.rows * self.board.cols
 
   def initialize_board(self):
     """samples and places mines in random locations"""
@@ -103,7 +102,7 @@ class GameLogic:
       return
 
     # uncover the first cell safely
-    if self.covered_cells == 100 - self.total_mines:
+    if self.covered_cells == 100:
       self.uncover_first_cell(row, col)
 
     # uncover the cell
@@ -122,7 +121,7 @@ class GameLogic:
             self.uncover_cell(i, j)
 
     # check whether the user has uncovered all cells
-    if self.covered_cells == 0:
+    if self.covered_cells == self.total_mines:
       self.end_game(EndCondition.Win)
 
   def toggle_flagged_cell(self, row: int, col: int):
