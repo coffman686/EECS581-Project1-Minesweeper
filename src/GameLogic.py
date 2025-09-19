@@ -126,6 +126,10 @@ class GameLogic:
   def toggle_flagged_cell(self, row: int, col: int):
     """toggles flagged state with flag count validation"""
     cell = self.board.cell(row, col)
+
+    if not cell.is_covered:
+      return
+
     if cell.flagged:
       self.board.set_flag(row, col, False)
       self.flags_remaining += 1
