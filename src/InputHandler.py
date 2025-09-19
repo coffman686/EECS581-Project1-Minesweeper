@@ -81,24 +81,19 @@ class InputHandler:
             return Response(game, ResponseCode.Ignored, "Game must be in progress")
         # if the event was a mouse click
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # ensure that the coordinates are in the proper range
-            if game.valid_position:
-                # if left click -> uncover mine
-                if event.button == 1:
-                    game.uncover_cell(row=y, col=x)
-                    # return updated game
-                    return Response(game, ResponseCode.Finished, f"Uncovered cell at ({x}, {y})")
-                # if right click -> toggle flag
-                elif event.button == 3:
-                    game.toggle_flagged_cell(row=y, col=x)
-                    # return updated game
-                    return Response(game, ResponseCode.Finished, f"Toggled flag at ({x}, {y})")
-                # if not a valid mouse click, return ignored response
-                else:
-                    return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
-            # if click not in range, return ignored response
+            # if left click -> uncover mine
+            if event.button == 1:
+                game.uncover_cell(row=y, col=x)
+                 # return updated game
+                return Response(game, ResponseCode.Finished, f"Uncovered cell at ({x}, {y})")
+            # if right click -> toggle flag
+            elif event.button == 3:
+                game.toggle_flagged_cell(row=y, col=x)
+                # return updated game
+                return Response(game, ResponseCode.Finished, f"Toggled flag at ({x}, {y})")
+            # if not a valid mouse click, return ignored response
             else:
-                return Response(game, ResponseCode.Ignored, "Click out of range")
+                return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
         # if not a click, return ignored response
         else:
             return Response(game, ResponseCode.Ignored, "Ignored irrelevant input")
