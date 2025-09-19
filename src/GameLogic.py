@@ -114,13 +114,13 @@ class GameLogic:
         return
 
       # recursively uncover neighbors
-      adjacent = [(row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)]
-      for i, j in adjacent:
-        if not self.board.in_bounds(i, j):
-          continue
-        cell = self.board.cell(i, j)
-        if not cell.is_mine and cell.is_covered:
-          self.uncover_cell(i, j)
+      for i in range(row - 1, row + 2):
+        for j in range(col - 1, col + 2):
+          if not self.board.in_bounds(i, j):
+            continue
+          cell = self.board.cell(i, j)
+          if not cell.is_mine and cell.is_covered:
+            self.uncover_cell(i, j)
 
     # check whether the user has uncovered all cells
     if self.covered_cells == 0:
