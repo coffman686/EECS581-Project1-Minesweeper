@@ -98,28 +98,27 @@ class GameLogic:
     if cell.flagged:
       return
 
+    if cell.is_mine:
+      self.end_game(EndCondition.Loss)
+      return
+
     # uncover the first cell safely
     if self.covered_cells == 100 - self.total_mines:
       self.uncover_first_cell(row, col)
 
-    if cell.is_mine:
-      self.end_game(EndCondition.Loss)
-    else:
-      # uncover the cell
-      self.board.uncover(row, col)
-      self.covered_cells -= 1
+    # uncover the cell
+    self.board.uncover(row, col)
+    self.covered_cells -= 1
 
-      # end if the cell has neighboring mines
-      if cell.neighbor_count:
-        return
-
+    # only continue flood fill if there are no neighboring mines
+    if cell.neighbor_count == 0:
       # recursively uncover neighbors
       for i in range(row - 1, row + 2):
         for j in range(col - 1, col + 2):
           if not self.board.in_bounds(i, j):
             continue
           cell = self.board.cell(i, j)
-          if not cell.is_mine and cell.is_covered:
+          if not cell.is_mine:
             self.uncover_cell(i, j)
 
     # check whether the user has uncovered all cells
