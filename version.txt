@@ -14,7 +14,7 @@ VSVersionInfo(
         StringStruct('OriginalFilename', 'Minesweeper-Windows.exe'),
         StringStruct('ProductName', 'Minesweeper'),
         StringStruct('ProductVersion', '1.0.3'),
-        StringStruct('Comments', 'Academic project for EECS 581; intended to be improved upon')
+        StringStruct('Comments', 'Academic project 1 for EECS 581; intended to be improved upon')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
