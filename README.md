@@ -36,7 +36,7 @@
 ## ⬇️ Download (Windows)
 
 - **Windows (.zip)**:  
-  [Minesweeper-Windows-1.0.1.zip](https://github.com/coffman686/EECS581-Project1-Minesweeper/releases/download/v1.0.1/Minesweeper-Windows-1.0.1.zip)
+  [Minesweeper-Windows-1.0.3.zip](https://github.com/coffman686/EECS581-Project1-Minesweeper/releases/download/v1.0.3/Minesweeper-Windows-1.0.3.zip)
 
 
 <sub>macOS/Linux binaries aren’t included for this course deliverable due to time/requirements scope, extra signing/notarization complexity, and cross-platform packaging overhead. You can still run the game from source on any OS using Python and Pygame (see below).</sub>
