@@ -8,12 +8,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'University of Kansas — Team 26'),
         StringStruct('FileDescription', 'Minesweeper — EECS 581 course project'),
-        StringStruct('FileVersion', '1.0.2'),
+        StringStruct('FileVersion', '1.0.3'),
         StringStruct('InternalName', 'Minesweeper'),
         StringStruct('LegalCopyright', '© 2025 Team 26, University of Kansas'),
         StringStruct('OriginalFilename', 'Minesweeper-Windows.exe'),
         StringStruct('ProductName', 'Minesweeper'),
-        StringStruct('ProductVersion', '1.0.2'),
+        StringStruct('ProductVersion', '1.0.3'),
         StringStruct('Comments', 'Academic project for EECS 581; intended to be improved upon')
       ])
     ]),

@@ -96,14 +96,15 @@ class GameLogic:
 
     if cell.flagged:
       return
+    
+    if self.covered_cells == (self.board.rows * self.board.cols):  # was 100
+      self.uncover_first_cell(row, col)
+      # refresh the cell reference after potential mine relocation
+      cell = self.board.cell(row, col)
 
     if cell.is_mine:
       self.end_game(EndCondition.Loss)
       return
-
-    # uncover the first cell safely
-    if self.covered_cells == 100:
-      self.uncover_first_cell(row, col)
 
     # uncover the cell
     self.board.uncover(row, col)
